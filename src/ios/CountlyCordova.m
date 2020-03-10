@@ -3,479 +3,611 @@
 #import "Countly.h"
 #import "CountlyCordova.h"
 #import "CountlyConfig.h"
-#import "CountlyPushNotifications.h"
+//#import "CountlyPushNotifications.h"
 #import <Cordova/CDV.h>
-#import "CountlyCommon.h"
+//#import "CountlyCommon.h"
+#import "CountlyNative.h"
 
-CountlyConfig* config = nil;
+CountlyNative* countlyNative = nil;
 
-@interface CountlyPushNotifications()
-- (void)sendToken;
-@property (nonatomic, strong) NSString* token;
-@end
+//@interface CountlyPushNotifications()
+//- (void)sendToken;
+//@property (nonatomic, strong) NSString* token;
+//@end
 
 @implementation CountlyCordova
-
 - (void)init:(CDVInvokedUrlCommand*)command
 {
-    CDVPluginResult* pluginResult = nil;
-    NSString* serverurl = [command.arguments objectAtIndex:0];
-    NSString* appkey = [command.arguments objectAtIndex:1];
-    NSString* deviceID = @"";
-    
-    if(config == nil){
-        config = CountlyConfig.new;
+    if(countlyNative == nil){
+        countlyNative = CountlyNative.new;
     }
-    config.appKey = appkey;
-    config.host = serverurl;
-    
-    if(command.arguments.count == 3){
-        deviceID = [command.arguments objectAtIndex:2];
-        config.deviceID = deviceID;
-    }
-    
-    if (serverurl != nil && [serverurl length] > 0) {
-        [[Countly sharedInstance] startWithConfig:config];
-        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"initialized!"];
-    } else {
-        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR];
-    }
-
-    // config.deviceID = deviceID; doesn't work so applied at patch temporarly.
-    if(command.arguments.count == 3){
-        deviceID = [command.arguments objectAtIndex:2];
-        [Countly.sharedInstance setNewDeviceID:deviceID onServer:YES];   //replace and merge on server
-    }
-    
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    [countlyNative onCall: @"init" commandString: command.arguments callback: ^(NSString * theResult)
+     {
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: theResult];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+     }];
 }
 
-- (void)event:(CDVInvokedUrlCommand*)command
+- (void)recordEvent:(CDVInvokedUrlCommand*)command
 {
-    CDVPluginResult* pluginResult = nil;
-    NSString* eventType = [command.arguments objectAtIndex:0];
-    if (eventType != nil && [eventType length] > 0) {
-        if ([eventType  isEqual: @"event"]) {
-            NSString* eventName = [command.arguments objectAtIndex:1];
-            NSString* countString = [command.arguments objectAtIndex:2];
-            int countInt = [countString intValue];
-            [[Countly sharedInstance] recordEvent:eventName count:countInt];
-            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"event sent!"];
-        }
-        else if ([eventType  isEqual: @"eventWithSum"]){
-            NSString* eventName = [command.arguments objectAtIndex:1];
-            NSString* countString = [command.arguments objectAtIndex:2];
-            int countInt = [countString intValue];
-            NSString* sumString = [command.arguments objectAtIndex:3];
-            float sumFloat = [sumString floatValue];
-            [[Countly sharedInstance] recordEvent:eventName count:countInt  sum:sumFloat];
-            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"eventWithSum sent!"];
-        }
-        else if ([eventType  isEqual: @"eventWithSegment"]){
-            NSString* eventName = [command.arguments objectAtIndex:1];
-            NSString* countString = [command.arguments objectAtIndex:2];
-            int countInt = [countString intValue];
-            NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
-
-            for(int i=3,il=(int)command.arguments.count;i<il;i+=2){
-                dict[[command.arguments objectAtIndex:i]] = [command.arguments objectAtIndex:i+1];
-            }
-            [[Countly sharedInstance] recordEvent:eventName segmentation:dict count:countInt];
-            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"eventWithSegment sent!"];
-        }
-        else if ([eventType  isEqual: @"eventWithSumSegment"]){
-            NSString* eventName = [command.arguments objectAtIndex:1];
-            NSString* countString = [command.arguments objectAtIndex:2];
-            int countInt = [countString intValue];
-            NSString* sumString = [command.arguments objectAtIndex:3];
-            float sumFloat = [sumString floatValue];
-            NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
-
-            for(int i=4,il=(int)command.arguments.count;i<il;i+=2){
-                dict[[command.arguments objectAtIndex:i]] = [command.arguments objectAtIndex:i+1];
-            }
-            [[Countly sharedInstance] recordEvent:eventName segmentation:dict count:countInt  sum:sumFloat];
-            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"eventWithSegment sent!"];
-        }
-        else{
-            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"none cases!"];
-        }
-    } else {
-        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR];
+    if(countlyNative == nil){
+        countlyNative = CountlyNative.new;
     }
-
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    [countlyNative onCall: @"recordEvent" commandString: command.arguments callback: ^(NSString * theResult)
+     {
+         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: theResult];
+         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+     }];
 }
 - (void)recordView:(CDVInvokedUrlCommand*)command
 {
-    CDVPluginResult* pluginResult = nil;
-    NSString* recordView = [command.arguments objectAtIndex:0];
-    [Countly.sharedInstance recordView:recordView];
-    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"recordView Sent!"];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    if(countlyNative == nil){
+        countlyNative = CountlyNative.new;
+    }
+    [countlyNative onCall: @"recordView" commandString: command.arguments callback: ^(NSString * theResult)
+     {
+         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: theResult];
+         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+     }];
 }
 - (void)setloggingenabled:(CDVInvokedUrlCommand*)command
 {
-    CDVPluginResult* pluginResult = nil;
-    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"setloggingenabled!"];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    if(countlyNative == nil){
+        countlyNative = CountlyNative.new;
+    }
+    [countlyNative onCall: @"setloggingenabled" commandString: command.arguments callback: ^(NSString * theResult)
+     {
+         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: theResult];
+         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+     }];
 }
 
 - (void)setuserdata:(CDVInvokedUrlCommand*)command
 {
-    CDVPluginResult* pluginResult = nil;
-    NSString* name = [command.arguments objectAtIndex:0];
-    NSString* username = [command.arguments objectAtIndex:1];
-    NSString* email = [command.arguments objectAtIndex:2];
-    NSString* organization = [command.arguments objectAtIndex:3];
-    NSString* phone = [command.arguments objectAtIndex:4];
-    NSString* picture = [command.arguments objectAtIndex:5];
-    //NSString* picturePath = [command.arguments objectAtIndex:6];
-    NSString* gender = [command.arguments objectAtIndex:7];
-    NSString* byear = [command.arguments objectAtIndex:8];
-
-    Countly.user.name = name;
-    Countly.user.username = username;
-    Countly.user.email = email;
-    Countly.user.organization = organization;
-    Countly.user.phone = phone;
-    Countly.user.pictureURL = picture;
-    Countly.user.gender = gender;
-    Countly.user.birthYear = @([byear integerValue]);
-
-    [Countly.user save];
-
-    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"setuserdata!"];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
-}
-
-- (void)getDeviceID:(CDVInvokedUrlCommand*)command
-{
-    NSString* deviceID = Countly.sharedInstance.deviceID;
-    CDVPluginResult* pluginResult = nil;
-    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: deviceID];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
-}
-
-
-- (void)sendRating:(CDVInvokedUrlCommand*)command
-{
-    NSString* ratingString = [command.arguments objectAtIndex:0];
-    int rating = [ratingString intValue];
-    NSString* const kCountlySRKeyPlatform       = @"platform";
-    NSString* const kCountlySRKeyAppVersion     = @"app_version";
-    NSString* const kCountlySRKeyRating         = @"rating";
-    NSString* const kCountlyReservedEventStarRating = @"[CLY]_star_rating";
-
-    if (rating != 0)
-    {
-        NSDictionary* segmentation =
-        @{
-          kCountlySRKeyPlatform: CountlyDeviceInfo.osName,
-          kCountlySRKeyAppVersion: CountlyDeviceInfo.appVersion,
-          kCountlySRKeyRating: @(rating)
-          };
-        [Countly.sharedInstance recordReservedEvent:kCountlyReservedEventStarRating segmentation:segmentation];
+    if(countlyNative == nil){
+        countlyNative = CountlyNative.new;
     }
-    CDVPluginResult* pluginResult = nil;
-    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"sendRating!"];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    [countlyNative onCall: @"setuserdata" commandString: command.arguments callback: ^(NSString * theResult)
+     {
+         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: theResult];
+         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+     }];
 }
+
+// - (void)getDeviceID:(CDVInvokedUrlCommand*)command
+// {
+//     if(countlyNative == nil){
+//         countlyNative = CountlyNative.new;
+//     }
+//     [countlyNative onCall: @"getDeviceID" commandString: command.arguments callback: ^(NSString * theResult)
+//      {
+//          CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: theResult];
+//          [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+//      }];
+// }
+
+
+// - (void)sendRating:(CDVInvokedUrlCommand*)command
+// {
+//     if(countlyNative == nil){
+//         countlyNative = CountlyNative.new;
+//     }
+//     [countlyNative onCall: @"sendRating" commandString: command.arguments callback: ^(NSString * theResult)
+//      {
+//          CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: theResult];
+//          [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+//      }];
+// }
 
 - (void)start:(CDVInvokedUrlCommand*)command
 {
-    [Countly.sharedInstance beginSession];
-    CDVPluginResult* pluginResult = nil;
-    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"start!"];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    if(countlyNative == nil){
+        countlyNative = CountlyNative.new;
+    }
+    [countlyNative onCall: @"start" commandString: command.arguments callback: ^(NSString * theResult)
+     {
+         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: theResult];
+         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+     }];
 }
 
 - (void)update:(CDVInvokedUrlCommand*)command
 {
-    [Countly.sharedInstance updateSession];
-    CDVPluginResult* pluginResult = nil;
-    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"stop!"];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    if(countlyNative == nil){
+        countlyNative = CountlyNative.new;
+    }
+    [countlyNative onCall: @"update" commandString: command.arguments callback: ^(NSString * theResult)
+     {
+         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: theResult];
+         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+     }];
 }
+
+// - (void)manualSessionHandling:(CDVInvokedUrlCommand*)command
+// {
+//     if(countlyNative == nil){
+//         countlyNative = CountlyNative.new;
+//     }
+//     [countlyNative onCall: @"manualSessionHandling" commandString: command.arguments callback: ^(NSString * theResult)
+//      {
+//          CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: theResult];
+//          [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+//      }];
+// }
 
 - (void)stop:(CDVInvokedUrlCommand*)command
 {
-    [Countly.sharedInstance endSession];
-    CDVPluginResult* pluginResult = nil;
-    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"stop!"];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    if(countlyNative == nil){
+        countlyNative = CountlyNative.new;
+    }
+    [countlyNative onCall: @"stop" commandString: command.arguments callback: ^(NSString * theResult)
+     {
+         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: theResult];
+         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+     }];
 }
+
+// - (void)updateSessionPeriod:(CDVInvokedUrlCommand*)command
+// {
+//     if(countlyNative == nil){
+//         countlyNative = CountlyNative.new;
+//     }
+//     [countlyNative onCall: @"updateSessionPeriod" commandString: command.arguments callback: ^(NSString * theResult)
+//      {
+//          CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: theResult];
+//          [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+//      }];
+// }
+
+// - (void)eventSendThreshold:(CDVInvokedUrlCommand*)command
+// {
+//     if(countlyNative == nil){
+//         countlyNative = CountlyNative.new;
+//     }
+//     [countlyNative onCall: @"eventSendThreshold" commandString: command.arguments callback: ^(NSString * theResult)
+//      {
+//          CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: theResult];
+//          [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+//      }];
+// }
+
+// - (void)storedRequestsLimit:(CDVInvokedUrlCommand*)command
+// {
+//     if(countlyNative == nil){
+//         countlyNative = CountlyNative.new;
+//     }
+//     [countlyNative onCall: @"storedRequestsLimit" commandString: command.arguments callback: ^(NSString * theResult)
+//      {
+//          CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: theResult];
+//          [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+//      }];
+// }
 
 - (void)changeDeviceId:(CDVInvokedUrlCommand*)command
 {
-    NSString* newDeviceID = [command.arguments objectAtIndex:0];
-    NSString* onServerString = [command.arguments objectAtIndex:1];
-    
-    if ([onServerString  isEqual: @"true"]) {
-        [Countly.sharedInstance setNewDeviceID:newDeviceID onServer: YES];
-    }else{
-        [Countly.sharedInstance setNewDeviceID:newDeviceID onServer: NO];
+    if(countlyNative == nil){
+        countlyNative = CountlyNative.new;
     }
-    
-    CDVPluginResult* pluginResult = nil;
-    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"changeDeviceId!"];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    [countlyNative onCall: @"changeDeviceId" commandString: command.arguments callback: ^(NSString * theResult)
+     {
+         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: theResult];
+         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+     }];
 }
 
 - (void)setHttpPostForced:(CDVInvokedUrlCommand*)command
 {
-    CDVPluginResult* pluginResult = nil;
-    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"setHttpPostForced!"];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    if(countlyNative == nil){
+        countlyNative = CountlyNative.new;
+    }
+    [countlyNative onCall: @"setHttpPostForced" commandString: command.arguments callback: ^(NSString * theResult)
+     {
+         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: theResult];
+         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+     }];
 }
 
 - (void)enableParameterTamperingProtection:(CDVInvokedUrlCommand*)command
 {
-    NSString* salt = [command.arguments objectAtIndex:0];
-    config.secretSalt = salt;
-
-    CDVPluginResult* pluginResult = nil;
-    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"enableParameterTamperingProtection!"];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    if(countlyNative == nil){
+        countlyNative = CountlyNative.new;
+    }
+    [countlyNative onCall: @"enableParameterTamperingProtection" commandString: command.arguments callback: ^(NSString * theResult)
+     {
+         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: theResult];
+         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+     }];
 }
 
 - (void)startEvent:(CDVInvokedUrlCommand*)command
 {
-    NSString* eventName = [command.arguments objectAtIndex:0];
-    [Countly.sharedInstance startEvent:eventName];
-
-    CDVPluginResult* pluginResult = nil;
-    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"startEvent!"];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    if(countlyNative == nil){
+        countlyNative = CountlyNative.new;
+    }
+    [countlyNative onCall: @"startEvent" commandString: command.arguments callback: ^(NSString * theResult)
+     {
+         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: theResult];
+         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+     }];
 }
 
 - (void)endEvent:(CDVInvokedUrlCommand*)command
 {
-    
-    NSString* eventType = [command.arguments objectAtIndex:0];
-    CDVPluginResult* pluginResult = nil;
-
-    if ([eventType  isEqual: @"event"]) {
-        NSString* eventName = [command.arguments objectAtIndex:1];
-        [Countly.sharedInstance endEvent:eventName];
-        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"event sent!"];
+    if(countlyNative == nil){
+        countlyNative = CountlyNative.new;
     }
-    else if ([eventType  isEqual: @"eventWithSum"]){
-        NSString* eventName = [command.arguments objectAtIndex:1];
-        NSString* countString = [command.arguments objectAtIndex:2];
-        int countInt = [countString intValue];
-        NSString* sumString = [command.arguments objectAtIndex:3];
-        int sumInt = [sumString intValue];
-        NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
-        [Countly.sharedInstance endEvent:eventName segmentation:dict count:countInt sum:sumInt];
-        
-        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"eventWithSegment sent!"];
-    }
-    else if ([eventType  isEqual: @"eventWithSegment"]){
-        NSString* eventName = [command.arguments objectAtIndex:1];
-        NSString* countString = [command.arguments objectAtIndex:2];
-        int countInt = [countString intValue];
-        NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
-        for(int i=4,il=(int)command.arguments.count;i<il;i+=2){
-            dict[[command.arguments objectAtIndex:i]] = [command.arguments objectAtIndex:i+1];
-        }
-        [Countly.sharedInstance endEvent:eventName segmentation:dict count:countInt sum:0];
-
-        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"eventWithSegment sent!"];
-    }
-    else if ([eventType  isEqual: @"eventWithSumSegment"]){
-        NSString* eventName = [command.arguments objectAtIndex:1];
-        NSString* countString = [command.arguments objectAtIndex:2];
-        int countInt = [countString intValue];
-        NSString* sumString = [command.arguments objectAtIndex:3];
-        int sumInt = [sumString intValue];
-        NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
-        for(int i=4,il=(int)command.arguments.count;i<il;i+=2){
-            dict[[command.arguments objectAtIndex:i]] = [command.arguments objectAtIndex:i+1];
-        }
-        [Countly.sharedInstance endEvent:eventName segmentation:dict count:countInt sum:sumInt];
-        
-        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"eventWithSegment sent!"];
-    }
-    else{
-        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"none cases!"];
-    }
-
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    [countlyNative onCall: @"endEvent" commandString: command.arguments callback: ^(NSString * theResult)
+     {
+         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: theResult];
+         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+     }];
 }
 
 - (void)setLocation:(CDVInvokedUrlCommand*)command
 {
-    NSString* latitudeString = [command.arguments objectAtIndex:0];
-    NSString* longitudeString = [command.arguments objectAtIndex:1];
-
-    double latitudeDouble = [latitudeString doubleValue];
-    double longitudeDouble = [longitudeString doubleValue];
-
-    config.location = (CLLocationCoordinate2D){latitudeDouble,longitudeDouble};
-
-    CDVPluginResult* pluginResult = nil;
-    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"setLocation!"];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    if(countlyNative == nil){
+        countlyNative = CountlyNative.new;
+    }
+    [countlyNative onCall: @"setLocation" commandString: command.arguments callback: ^(NSString * theResult)
+     {
+         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: theResult];
+         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+     }];
 }
 
 - (void)enableCrashReporting:(CDVInvokedUrlCommand*)command
 {
-    config.features = @[CLYCrashReporting];
-
-    CDVPluginResult* pluginResult = nil;
-    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"enableCrashReporting!"];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    if(countlyNative == nil){
+        countlyNative = CountlyNative.new;
+    }
+    [countlyNative onCall: @"enableCrashReporting" commandString: command.arguments callback: ^(NSString * theResult)
+     {
+         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: theResult];
+         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+     }];
 }
 
 - (void)addCrashLog:(CDVInvokedUrlCommand*)command
 {
-    NSString* record = [command.arguments objectAtIndex:0];
-    [Countly.sharedInstance recordCrashLog: record];
-
-    CDVPluginResult* pluginResult = nil;
-    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"addCrashLog!"];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    if(countlyNative == nil){
+        countlyNative = CountlyNative.new;
+    }
+    [countlyNative onCall: @"addCrashLog" commandString: command.arguments callback: ^(NSString * theResult)
+     {
+         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: theResult];
+         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+     }];
 }
 
 - (void)logException:(CDVInvokedUrlCommand*)command
 {
-    NSString* execption = [command.arguments objectAtIndex:0];
-    NSString* nonfatal = [command.arguments objectAtIndex:1];
-    NSArray *nsException = [execption componentsSeparatedByString:@"\n"];
-
-    NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
-    
-    for(int i=2,il=(int)command.arguments.count;i<il;i+=2){
-        dict[[command.arguments objectAtIndex:i]] = [command.arguments objectAtIndex:i+1];
+    if(countlyNative == nil){
+        countlyNative = CountlyNative.new;
     }
-    [dict setObject:nonfatal forKey:@"nonfatal"];
+    [countlyNative onCall: @"logException" commandString: command.arguments callback: ^(NSString * theResult)
+     {
+         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: theResult];
+         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+     }];
+}
 
-    NSException* myException = [NSException exceptionWithName:@"Exception" reason:execption userInfo:dict];
-    
-    [Countly.sharedInstance recordHandledException:myException withStackTrace: nsException];
+- (void)sendPushToken:(CDVInvokedUrlCommand*)command
+{
+    if(countlyNative == nil){
+        countlyNative = CountlyNative.new;
+    }
+    [countlyNative onCall: @"sendPushToken" commandString: command.arguments callback: ^(NSString * theResult)
+     {
+         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: theResult];
+         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+     }];
+}
 
-    CDVPluginResult* pluginResult = nil;
-    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"logException!"];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+- (void)askForNotificationPermission:(CDVInvokedUrlCommand*)command
+{
+    if(countlyNative == nil){
+        countlyNative = CountlyNative.new;
+    }
+    [countlyNative onCall: @"askForNotificationPermission" commandString: command.arguments callback: ^(NSString * theResult)
+     {
+         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: theResult];
+         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+     }];
+}
+
+- (void)pushTokenType:(CDVInvokedUrlCommand*)command
+{
+    if(countlyNative == nil){
+        countlyNative = CountlyNative.new;
+    }
+    [countlyNative onCall: @"pushTokenType" commandString: command.arguments callback: ^(NSString * theResult)
+     {
+         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: theResult];
+         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+     }];
 }
 
 - (void)userData_setProperty:(CDVInvokedUrlCommand*)command
 {
-    NSString* keyName = [command.arguments objectAtIndex:0];
-    NSString* keyValue = [command.arguments objectAtIndex:1];
-
-    [Countly.user set:keyName value:keyValue];
-    [Countly.user save];
-
-    CDVPluginResult* pluginResult = nil;
-    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"userData_setProperty!"];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    if(countlyNative == nil){
+        countlyNative = CountlyNative.new;
+    }
+    [countlyNative onCall: @"userData_setProperty" commandString: command.arguments callback: ^(NSString * theResult)
+     {
+         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: theResult];
+         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+     }];
 }
 
 - (void)userData_increment:(CDVInvokedUrlCommand*)command
 {
-    NSString* keyName = [command.arguments objectAtIndex:0];
-
-    [Countly.user increment:keyName];
-    [Countly.user save];
-
-    CDVPluginResult* pluginResult = nil;
-    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"userData_incrementBy!"];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    if(countlyNative == nil){
+        countlyNative = CountlyNative.new;
+    }
+    [countlyNative onCall: @"userData_increment" commandString: command.arguments callback: ^(NSString * theResult)
+     {
+         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: theResult];
+         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+     }];
 }
 
 - (void)userData_incrementBy:(CDVInvokedUrlCommand*)command
 {
-    NSString* keyName = [command.arguments objectAtIndex:0];
-    NSString* keyValue = [command.arguments objectAtIndex:1];
-    int keyValueInteger = [keyValue intValue];
-
-    [Countly.user incrementBy:keyName value:[NSNumber numberWithInt:keyValueInteger]];
-    [Countly.user save];
-
-    CDVPluginResult* pluginResult = nil;
-    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"userData_incrementBy!"];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    if(countlyNative == nil){
+        countlyNative = CountlyNative.new;
+    }
+    [countlyNative onCall: @"userData_incrementBy" commandString: command.arguments callback: ^(NSString * theResult)
+     {
+         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: theResult];
+         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+     }];
 }
 
 - (void)userData_multiply:(CDVInvokedUrlCommand*)command
 {
-    NSString* keyName = [command.arguments objectAtIndex:0];
-    NSString* keyValue = [command.arguments objectAtIndex:1];
-    int keyValueInteger = [keyValue intValue];
-
-    [Countly.user multiply:keyName value:[NSNumber numberWithInt:keyValueInteger]];
-    [Countly.user save];
-
-    CDVPluginResult* pluginResult = nil;
-    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"userData_multiply!"];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    if(countlyNative == nil){
+        countlyNative = CountlyNative.new;
+    }
+    [countlyNative onCall: @"userData_multiply" commandString: command.arguments callback: ^(NSString * theResult)
+     {
+         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: theResult];
+         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+     }];
 }
 
 - (void)userData_saveMax:(CDVInvokedUrlCommand*)command
 {
-    NSString* keyName = [command.arguments objectAtIndex:0];
-    NSString* keyValue = [command.arguments objectAtIndex:1];
-    int  keyValueInteger = [keyValue intValue];
-
-    [Countly.user max:keyName value:[NSNumber numberWithInt:keyValueInteger]];
-    [Countly.user save];
-
-    CDVPluginResult* pluginResult = nil;
-    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"userData_saveMax!"];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    if(countlyNative == nil){
+        countlyNative = CountlyNative.new;
+    }
+    [countlyNative onCall: @"userData_saveMax" commandString: command.arguments callback: ^(NSString * theResult)
+     {
+         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: theResult];
+         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+     }];
 }
 
 - (void)userData_saveMin:(CDVInvokedUrlCommand*)command
 {
-    NSString* keyName = [command.arguments objectAtIndex:0];
-    NSString* keyValue = [command.arguments objectAtIndex:1];
-    int keyValueInteger = [keyValue intValue];
-
-    [Countly.user min:keyName value:[NSNumber numberWithInt:keyValueInteger]];
-    [Countly.user save];
-
-    CDVPluginResult* pluginResult = nil;
-    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"userData_saveMin!"];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    if(countlyNative == nil){
+        countlyNative = CountlyNative.new;
+    }
+    [countlyNative onCall: @"userData_saveMin" commandString: command.arguments callback: ^(NSString * theResult)
+     {
+         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: theResult];
+         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+     }];
 }
 
 - (void)userData_setOnce:(CDVInvokedUrlCommand*)command
 {
-    NSString* keyName = [command.arguments objectAtIndex:0];
-    NSString* keyValue = [command.arguments objectAtIndex:1];
+    if(countlyNative == nil){
+        countlyNative = CountlyNative.new;
+    }
+    [countlyNative onCall: @"userData_setOnce" commandString: command.arguments callback: ^(NSString * theResult)
+     {
+         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: theResult];
+         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+     }];
+}
 
-    [Countly.user setOnce:keyName value:keyValue];
-    [Countly.user save];
+- (void)userData_pushUniqueValue:(CDVInvokedUrlCommand*)command
+{
+    if(countlyNative == nil){
+        countlyNative = CountlyNative.new;
+    }
+    [countlyNative onCall: @"userData_pushUniqueValue" commandString: command.arguments callback: ^(NSString * theResult)
+     {
+         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: theResult];
+         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+     }];
+}
 
-    CDVPluginResult* pluginResult = nil;
-    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"userData_setOnce!"];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+- (void)userData_pushValue:(CDVInvokedUrlCommand*)command
+{
+    if(countlyNative == nil){
+        countlyNative = CountlyNative.new;
+    }
+    [countlyNative onCall: @"userData_pushValue" commandString: command.arguments callback: ^(NSString * theResult)
+     {
+         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: theResult];
+         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+     }];
+}
+
+- (void)userData_pullValue:(CDVInvokedUrlCommand*)command
+{
+    if(countlyNative == nil){
+        countlyNative = CountlyNative.new;
+    }
+    [countlyNative onCall: @"userData_pullValue" commandString: command.arguments callback: ^(NSString * theResult)
+     {
+         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: theResult];
+         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+     }];
+}
+
+- (void)setRequiresConsent:(CDVInvokedUrlCommand*)command
+{
+    if(countlyNative == nil){
+        countlyNative = CountlyNative.new;
+    }
+    [countlyNative onCall: @"setRequiresConsent" commandString: command.arguments callback: ^(NSString * theResult)
+     {
+         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: theResult];
+         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+     }];
+}
+
+- (void)giveConsent:(CDVInvokedUrlCommand*)command
+{
+    if(countlyNative == nil){
+        countlyNative = CountlyNative.new;
+    }
+    [countlyNative onCall: @"giveConsent" commandString: command.arguments callback: ^(NSString * theResult)
+     {
+         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: theResult];
+         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+     }];
+}
+
+- (void)removeConsent:(CDVInvokedUrlCommand*)command
+{
+    if(countlyNative == nil){
+        countlyNative = CountlyNative.new;
+    }
+    [countlyNative onCall: @"removeConsent" commandString: command.arguments callback: ^(NSString * theResult)
+     {
+         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: theResult];
+         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+     }];
+}
+
+- (void)giveAllConsent:(CDVInvokedUrlCommand*)command
+{
+    if(countlyNative == nil){
+        countlyNative = CountlyNative.new;
+    }
+    [countlyNative onCall: @"giveAllConsent" commandString: command.arguments callback: ^(NSString * theResult)
+     {
+         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: theResult];
+         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+     }];
+}
+
+- (void)removeAllConsent:(CDVInvokedUrlCommand*)command
+{
+    if(countlyNative == nil){
+        countlyNative = CountlyNative.new;
+    }
+    [countlyNative onCall: @"removeAllConsent" commandString: command.arguments callback: ^(NSString * theResult)
+     {
+         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: theResult];
+         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+     }];
 }
 
 - (void)setOptionalParametersForInitialization:(CDVInvokedUrlCommand*)command
 {
-    NSString* city = [command.arguments objectAtIndex:0];
-    NSString* country = [command.arguments objectAtIndex:1];
-
-    NSString* latitudeString = [command.arguments objectAtIndex:2];
-    NSString* longitudeString = [command.arguments objectAtIndex:3];
-
-    double latitudeDouble = [latitudeString doubleValue];
-    double longitudeDouble = [longitudeString doubleValue];
-
-    if(config == nil){
-        config = CountlyConfig.new;
+    if(countlyNative == nil){
+        countlyNative = CountlyNative.new;
     }
-
-    config.ISOCountryCode = country;
-    config.city = city;
-    config.location = (CLLocationCoordinate2D){latitudeDouble,longitudeDouble};
-
-    CDVPluginResult* pluginResult = nil;
-    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"setOptionalParametersForInitialization!"];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    [countlyNative onCall: @"setOptionalParametersForInitialization" commandString: command.arguments callback: ^(NSString * theResult)
+     {
+         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: theResult];
+         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+     }];
 }
+
+- (void)setRemoteConfigAutomaticDownload:(CDVInvokedUrlCommand*)command
+{
+    if(countlyNative == nil){
+        countlyNative = CountlyNative.new;
+    }
+    [countlyNative onCall: @"setRemoteConfigAutomaticDownload" commandString: command.arguments callback: ^(NSString * theResult)
+     {
+         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: theResult];
+         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+     }];
+}
+- (void)remoteConfigUpdate:(CDVInvokedUrlCommand*)command
+{
+    if(countlyNative == nil){
+        countlyNative = CountlyNative.new;
+    }
+    [countlyNative onCall: @"remoteConfigUpdate" commandString: command.arguments callback: ^(NSString * theResult)
+     {
+         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: theResult];
+         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+     }];
+}
+- (void)updateRemoteConfigForKeysOnly:(CDVInvokedUrlCommand*)command
+{
+    if(countlyNative == nil){
+        countlyNative = CountlyNative.new;
+    }
+    [countlyNative onCall: @"updateRemoteConfigForKeysOnly" commandString: command.arguments callback: ^(NSString * theResult)
+     {
+         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: theResult];
+         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+     }];
+}
+- (void)updateRemoteConfigExceptKeys:(CDVInvokedUrlCommand*)command
+{
+    if(countlyNative == nil){
+        countlyNative = CountlyNative.new;
+    }
+    [countlyNative onCall: @"updateRemoteConfigExceptKeys" commandString: command.arguments callback: ^(NSString * theResult)
+     {
+         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: theResult];
+         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+     }];
+}
+- (void)remoteConfigClearValues:(CDVInvokedUrlCommand*)command
+{
+    if(countlyNative == nil){
+        countlyNative = CountlyNative.new;
+    }
+    [countlyNative onCall: @"remoteConfigClearValues" commandString: command.arguments callback: ^(NSString * theResult)
+     {
+         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: theResult];
+         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+     }];
+}
+- (void)getRemoteConfigValueForKey:(CDVInvokedUrlCommand*)command
+{
+    if(countlyNative == nil){
+        countlyNative = CountlyNative.new;
+    }
+    [countlyNative onCall: @"getRemoteConfigValueForKey" commandString: command.arguments callback: ^(NSString * theResult)
+     {
+         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: theResult];
+         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+     }];
+}
+- (void)askForFeedback:(CDVInvokedUrlCommand*)command
+{
+    if(countlyNative == nil){
+        countlyNative = CountlyNative.new;
+    }
+    [countlyNative onCall: @"askForFeedback" commandString: command.arguments callback: ^(NSString * theResult)
+     {
+         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: theResult];
+         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+     }];
+}
+
+- (void)askForStarRating:(CDVInvokedUrlCommand*)command
+{
+    if(countlyNative == nil){
+        countlyNative = CountlyNative.new;
+    }
+    [countlyNative onCall: @"askForStarRating" commandString: command.arguments callback: ^(NSString * theResult)
+     {
+         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString: theResult];
+         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+     }];
+}
+
 
 @end
